@@ -15,10 +15,15 @@ use Illuminate\Support\Facades\Route;
 */
 
 
-Route::get('/', function () {
+
+Route::get('/', 'InicioController@index')->name('inicio');
+Route::get('/archivos/procesar', 'InicioController@readFiles')->name('readFiles');
+Route::get('/archivos/subir/{code}', 'InicioController@uploadFile')->name('uploadFile');
+Route::get('/archivos/guardar', 'InicioController@saveFile')->name('saveFile');
+
+/*Route::get('/', function () {
     return view('welcome');
 });
-
 Route::middleware(['auth:sanctum', 'verified'])->group(function(){
 	Route::get('/inicio', function () {
 	    return view('dashboard');
@@ -37,3 +42,4 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function(){
 	})->name('citas');
 });
 
+*/
