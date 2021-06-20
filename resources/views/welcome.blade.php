@@ -78,18 +78,28 @@
             </div>
         </div>
         <script type="text/javascript">
-            setInterval(function(){
+            let registrarVideos = function(){
                 fetch("{{route('readFiles')}}").then(function(response) {
                     if(response.ok){
-                        console.log(response);
+                        // console.log(response);
+                        return response.json();
                     } else {
                         console.log('Respuesta de red OK pero respuesta HTTP no OK');
                     }
                 })
                 .catch(function(error) {
                     console.log('Hubo un problema con la petición Fetch:' + error.message);
+                }).then(function(json){
+                    console.log(json.procesados);
+                    if(json.procesados.length){
+                        location.reload();
+                    }
                 });
-            }, 15000);
+            }
+            setInterval(function(){
+                registrarVideos();
+            }, 5000);
+            // registrarVideos();
             $('.card').off('click').on('click', function(){
                 $('#myModal').modal('show');
                 let srcVideo = $(this).find('source').attr('src');
@@ -102,13 +112,19 @@
                 qr.setAttribute('src', srcImage);
                 fetch(urlUpload).then(function(response) {
                     if(response.ok) {
-                        console.log(`${srcVideo} cargado.`);
+                        // console.log(response);
+                        return response.json();
                     } else {
                         console.log('Respuesta de red OK pero respuesta HTTP no OK');
                     }
                 })
                 .catch(function(error) {
                     console.log('Hubo un problema con la petición Fetch:' + error.message);
+                }).then(function(json){
+                    console.log(json);
+                    if(json.length){
+
+                    }
                 });
                 
             });

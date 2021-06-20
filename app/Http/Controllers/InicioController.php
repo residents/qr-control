@@ -21,14 +21,15 @@ class InicioController extends Controller
     }
 
     public function readFiles($ruta = ''){
+    	$procesados = [];
     	if($ruta == ''){
     		$ruta =  $this->ruta;
-    		echo "Archivos procesados:";
+    		// echo "Archivos procesados:";
     	}
     	if (is_dir($ruta)){
 	        // Abre un gestor de directorios para la ruta indicada
 	        $gestor = opendir($ruta);
-	        echo "<ul>";
+	        // echo "<ul>";
 
 	        // Recorre todos los elementos del directorio
 	        while (($file = readdir($gestor)) !== false)  {
@@ -39,10 +40,11 @@ class InicioController extends Controller
 	            if ($file != "." && $file != ".." && $file != 'register') {
 	                // Si es un directorio se recorre recursivamente
 	                if (is_dir($ruta_completa)) {
-	                    echo "<li>" . $file . "</li>";
+	                    // echo "<li>" . $file . "</li>";
 	                    $this->readFiles($ruta_completa);
 	                } else {
-	                    echo "<li>" . $file . "</li>";
+	                    // echo "<li>" . $file . "</li>";
+	                    $procesados[] = $ruta_completa;
 	                    $this->registerFile($ruta_completa, $file);
 	                }
 	            }
@@ -50,10 +52,11 @@ class InicioController extends Controller
 	        
 	        // Cierra el gestor de directorios
 	        closedir($gestor);
-	        echo "</ul>";
+	        // echo "</ul>";
 	    } else {
-	        echo "No es una ruta de directorio valida<br/>";
+	        // echo "No es una ruta de directorio valida<br/>";
 	    }
+	    return response()->json(['procesados' => $procesados]);
     }
 
     private function getCode($length, $seed){    
@@ -88,23 +91,24 @@ class InicioController extends Controller
     		'type' => '2', //1: imagen, 2:video
     		'status' => '1', // 1: registrado, 2:
     	]);
+    	$this->uploadFile($code);
     	\QrCode::size(500)
             ->format('png')
             ->generate($this->urlExtern.'visor.php?code='.$code, public_path("qr/$code.png"));
     }
 
     public function uploadFile($code){
-    	$file = Media::where('code', $code)->first();
-    	//dd($file->toArray());
-    	$response = Http::attach(
-		    'attachment', file_get_contents($file->path), "$code.mp4"
-		)->post($this->urlExtern.'saveFile.php', [
-			'data' => $file
-		]);
-    	$file->uploaded_at = date('Y-m-d H:i:s');
-    	$file->save();
-    	// dd($response);
-    	return response()->json(['code' => $code, 'ok' => true, $response]);
+    	$file = Media::where('code', $code)->whereNull('uploaded_at')->first();
+    	if($file){
+	    	$response = Http::attach(
+			    'attachment', file_get_contents($file->path), "$code.mp4"
+			)->post($this->urlExtern.'saveFile.php', [
+				'data' => $file
+			]);
+	    	$file->uploaded_at = date('Y-m-d H:i:s');
+	    	$file->save();
+	    }
+    	return response()->json(['code' => $code, 'ok' => true]);
     }
     public function saveFile(Request $request){
     	dd($request);
