@@ -14,6 +14,7 @@ class InicioController extends Controller
     //
     private $ruta = './media';
     private $urlExtern = 'https://apps.cinteractivo.mx/photoboot/';
+    private $extensions = ['mp4', 'jpg', 'jpeg', 'gif'];
 
     public function index(){
     	$videos = Media::orderByRaw('uploaded_at - created_at DESC')->get();
@@ -34,14 +35,18 @@ class InicioController extends Controller
 	            if ($file != "." && $file != ".." && $file != 'register') {
 	                // Si es un directorio se recorre recursivamente
 	                if (is_dir($ruta_completa)) {
-	                    $this->readFiles($ruta_completa);
+	                    //$this->readFiles($ruta_completa);
 	                } else {
-                        $extension = explode('.', $file);
-                        $cantidad =sizeof($extension);
-                        $extension_correcta = $cantidad >= 1 && $extension[$cantidad-1] == 'mp4' ? 'mp4' : false; 
+                        $ext = explode('.', $file);
+                        $ext = $ext[sizeof($ext) - 1];
+                        //$cantidad =;
+                        //$extension_correcta = $cantidad >= 1 && $extension[$cantidad-1] == 'mp4' ? 'mp4' : false; 
                         // Se muestran todos los archvios y carpetas excepto "." y ".." 
-                        if($extension_correcta){
-    	                    $procesados[] = $this->registerFile($ruta_completa, $file);
+                        if(in_array($ext, $this->extensions)){
+    	                    $proceso = $this->registerFile($ruta_completa, $file, $ext);
+                            if($proceso){
+                                $procesados[] = $proceso;
+                            }
                         }
 	                }
 	            }
@@ -66,7 +71,7 @@ class InicioController extends Controller
         return 'FE'. $token;
     }
 
-    public function registerFile($pathFile, $namefile){
+    public function registerFile($pathFile, $namefile, $extension){
     	// dd($file);
 		$destiny = $this->ruta . "/new/video/";
         $media = Media::where('path', $pathFile)->get();
@@ -84,23 +89,23 @@ class InicioController extends Controller
         	$media = Media::create([
         		'path' => $pathFile,
         		'code' => $code,
-        		'type' => '2', //1: imagen, 2:video
+        		'extension' => $extension,// == 'mp4' ? 2 : 1,//'2', //1: mp4, 2:video
         		'status' => '1', // 1: registrado, 2:
         	]);
         	$this->uploadFile($code);
-        	\QrCode::size(500)
-                ->format('png')
-                ->generate($this->urlExtern.'visor.php?code='.$code, public_path("qr/$code.png"));
+        	// \QrCode::size(500)
+         //        ->format('png')
+         //        ->generate($this->urlExtern.'visor.php?code='.$code, public_path("qr/$code.png"));
             return ['file' => $namefile, 'status' => 'Procesado'];
         }
-        return ['file' => $namefile, 'status' => 'Omitido'];
+        return false;
     }
 
     public function uploadFile($code){
     	$file = Media::where('code', $code)->whereNull('uploaded_at')->first();
     	if($file){
 	    	$response = Http::attach(
-			    'attachment', file_get_contents($file->path), "$code.mp4"
+			    'attachment', file_get_contents($file->path), "$file->code.$file->extension"
 			)->post($this->urlExtern.'saveFile.php', [
 				'data' => $file
 			]);

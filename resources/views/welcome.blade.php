@@ -37,15 +37,18 @@
     <body class="antialiased">
         <div class="container-fluid px-4 py-3 fondo">
           <div class="row">
-                @foreach($videos as $video)
-                <div class="card col-md-3 col-lg-3 col-sm-6 mb-2 p-0 px-1 bg-card border-0" data-url="{{route('uploadFile', ['code' => $video->code])}}">
-                    <video autoplay loop muted data-qr="{{URL::to("qr/$video->code.png")}}">
-                        <source src="{{$video->path}}" type="video/mp4">
-                    </video>
-                    <!-- <div class="card-body">
-                        <a href="#" class="btn btn-block btn-primary">Mostrar QR code</a>
-                    </div> -->
-                </div>
+                @foreach($videos as $file)
+                    <div class="card col-md-3 col-lg-3 col-sm-6 mb-2 p-0 px-1 bg-card border-0" data-url="{{route('uploadFile', ['code' => $file->code])}}" data-extension="{{$file->extension}}" data-qr="https://chart.apis.google.com/chart?cht=qr&chs=400x400&chld=L|0&chl=https://apps.cinteractivo.mx/photoboot/visor.php?code={{$file->code}}" data-src="{{$file->path}}">
+                    @if($file->extension == 'mp4')
+                        <video autoplay loop muted>
+                            <source src="{{$file->path}}" type="video/mp4">
+                        </video>
+                    @elseif($file->extension == 'jpg' || $file->extension == 'jpeg')
+                        <img src="{{$file->path}}">   
+                    @elseif($file->extension == 'gif')
+                        <img src="{{$file->path}}"> 
+                    @endif
+                    </div>
                 @endforeach
           </div>
         </div>
@@ -59,12 +62,13 @@
                     </div> -->
                     <div class="modal-body">
                         <div class="row">
-                            <video autoplay loop muted id="videoModal" class="col-md-6 col-sm-6">
+                            <video autoplay loop muted id="videoModal" class="jqFile col-md-6 col-sm-6 d-none">
                                 <source src="" type="video/mp4">
                             </video>
+                            <img id="imageModal" src="" class="jqFile col-md-6 col-sm-6 d-none">
                             <div class="col-md-6 col-sm-6 container">
                                 <div class="row align-items-center mt-5 pt-5">
-                                    <img src="img/default.png" id="imageModal" class="col-md-12 mt-5">
+                                    <img src="img/default.png" id="qrModal" class="col-md-12 mt-5">
                                 </div>
                             </div>
                         </div>
@@ -92,6 +96,7 @@
                 }).then(function(json){
                     console.log(json.procesados);
                     if(json.procesados.length){
+                        console.log(json.procesados);
                         location.reload();
                     }
                 });
@@ -102,30 +107,38 @@
             // registrarVideos();
             $('.card').off('click').on('click', function(){
                 $('#myModal').modal('show');
-                let srcVideo = $(this).find('source').attr('src');
-                let srcImage = $(this).find('video').attr('data-qr');
+                let srcfile = $(this).attr('data-src');
+                let srcQr = $(this).attr('data-qr');
                 let urlUpload = $(this).attr('data-url');
-                console.log(srcImage);
-                let video = document.getElementById("videoModal");
-                let qr = document.getElementById("imageModal");
-                video.setAttribute('src', srcVideo);
-                qr.setAttribute('src', srcImage);
-                fetch(urlUpload).then(function(response) {
-                    if(response.ok) {
-                        // console.log(response);
-                        return response.json();
-                    } else {
-                        console.log('Respuesta de red OK pero respuesta HTTP no OK');
-                    }
-                })
-                .catch(function(error) {
-                    console.log('Hubo un problema con la petición Fetch:' + error.message);
-                }).then(function(json){
-                    console.log(json);
-                    if(json.length){
+                let ext = $(this).attr('data-extension');
+                let qr = document.getElementById("qrModal");
+                //if(ext == 'mp4'){
+                    $('#videoModal, #imageModal').addClass('jqFile col-md-6 col-sm-6 d-none');
+                    let id = ext == 'mp4' ? 'videoModal' : 'imageModal';
+                    let file = document.getElementById(id);
+                    file.setAttribute('src', srcfile);
+                    $(file).removeClass('d-none');
+                console.log(srcfile, srcQr, ext, id);
+                ///}else{
+                   // $('#imageModal').attr('src', srcfile);
+                //}
+                qr.setAttribute('src', srcQr);
+                // fetch(urlUpload).then(function(response) {
+                //     if(response.ok) {
+                //         // console.log(response);
+                //         return response.json();
+                //     } else {
+                //         console.log('Respuesta de red OK pero respuesta HTTP no OK');
+                //     }
+                // })
+                // .catch(function(error) {
+                //     console.log('Hubo un problema con la petición Fetch:' + error.message);
+                // }).then(function(json){
+                //     console.log(json);
+                //     if(json.length){
 
-                    }
-                });
+                //     }
+                // });
                 
             });
         </script>

@@ -24,7 +24,7 @@ class Media extends Model
     protected $fillable = [
         'path',
 		'code',
-		'type',
+		'extension',
 		'status',
 		'uploaded_at',
 		'viewed_at',
