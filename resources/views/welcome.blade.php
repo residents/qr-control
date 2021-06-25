@@ -38,7 +38,7 @@
         <div class="container-fluid px-4 py-3 fondo">
           <div class="row">
                 @foreach($videos as $file)
-                    <div class="card col-md-3 col-lg-3 col-sm-6 mb-2 p-0 px-1 bg-card border-0" data-url="{{route('uploadFile', ['code' => $file->code])}}" data-extension="{{$file->extension}}" data-qr="https://chart.apis.google.com/chart?cht=qr&chs=400x400&chld=L|0&chl=https://apps.cinteractivo.mx/photoboot/visor.php?code={{$file->code}}" data-src="{{$file->path}}">
+                    <div class="card col-md-3 col-lg-3 col-sm-6 mb-2 p-0 px-1 bg-card border-0" data-url="{{route('uploadFile', ['code' => $file->code])}}" data-extension="{{$file->extension}}" data-qr="https://chart.apis.google.com/chart?cht=qr&chs=400x400&chld=L|0&chl=https://apps.cinteractivo.mx/photoboot/visor.php?code={{$file->code}}&ext={{$file->extension}}" data-src="{{$file->path}}">
                     @if($file->extension == 'mp4')
                         <video autoplay loop muted>
                             <source src="{{$file->path}}" type="video/mp4">
