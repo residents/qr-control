@@ -24,37 +24,31 @@ class InicioController extends Controller
     	$procesados = [];
     	if($ruta == ''){
     		$ruta =  $this->ruta;
-    		// echo "Archivos procesados:";
     	}
     	if (is_dir($ruta)){
 	        // Abre un gestor de directorios para la ruta indicada
 	        $gestor = opendir($ruta);
-	        // echo "<ul>";
-
 	        // Recorre todos los elementos del directorio
 	        while (($file = readdir($gestor)) !== false)  {
-	                
 	            $ruta_completa = $ruta . "/" . $file;
-
-	            // Se muestran todos los archvios y carpetas excepto "." y ".."
 	            if ($file != "." && $file != ".." && $file != 'register') {
 	                // Si es un directorio se recorre recursivamente
 	                if (is_dir($ruta_completa)) {
-	                    // echo "<li>" . $file . "</li>";
 	                    $this->readFiles($ruta_completa);
 	                } else {
-	                    // echo "<li>" . $file . "</li>";
-	                    $procesados[] = $ruta_completa;
-	                    $this->registerFile($ruta_completa, $file);
+                        $extension = explode('.', $file);
+                        $cantidad =sizeof($extension);
+                        $extension_correcta = $cantidad >= 1 && $extension[$cantidad-1] == 'mp4' ? 'mp4' : false; 
+                        // Se muestran todos los archvios y carpetas excepto "." y ".." 
+                        if($extension_correcta){
+    	                    $procesados[] = $this->registerFile($ruta_completa, $file);
+                        }
 	                }
 	            }
 	        }
-	        
 	        // Cierra el gestor de directorios
 	        closedir($gestor);
 	        // echo "</ul>";
-	    } else {
-	        // echo "No es una ruta de directorio valida<br/>";
 	    }
 	    return response()->json(['procesados' => $procesados]);
     }
@@ -74,27 +68,32 @@ class InicioController extends Controller
 
     public function registerFile($pathFile, $namefile){
     	// dd($file);
-    	$code = '';
-    	do{
-		    $code = $this->getCode(5, date('si'));
-		    // $code = $code;// . substr(strftime("%Y", time()),2);
-		    $mediaExist = Media::where('code', $code)->get();
-		    // dd($mediaExist->count());
-		}while($mediaExist->count());
-		$destiny = $this->ruta . "/register/video/";
-		 // dd($pathFile, $destiny . $namefile);
-		copy($pathFile, $destiny . $namefile);
-		unlink($pathFile);
-    	$appointment = Media::create([
-    		'path' => "$destiny$namefile",
-    		'code' => $code,
-    		'type' => '2', //1: imagen, 2:video
-    		'status' => '1', // 1: registrado, 2:
-    	]);
-    	$this->uploadFile($code);
-    	\QrCode::size(500)
-            ->format('png')
-            ->generate($this->urlExtern.'visor.php?code='.$code, public_path("qr/$code.png"));
+		$destiny = $this->ruta . "/new/video/";
+        $media = Media::where('path', $pathFile)->get();
+        if($media->count() == 0){
+        	$code = '';
+        	do{
+        	    $code = $this->getCode(5, date('si'));
+        	    // $code = $code;// . substr(strftime("%Y", time()),2);
+        	    $mediaExist = Media::where('code', $code)->get();
+        	    // dd($mediaExist->count());
+        	}while($mediaExist->count());
+        	 // dd($pathFile, $destiny . $namefile);
+        	//copy($pathFile, $destiny . $namefile);
+        	//unlink($pathFile);
+        	$media = Media::create([
+        		'path' => $pathFile,
+        		'code' => $code,
+        		'type' => '2', //1: imagen, 2:video
+        		'status' => '1', // 1: registrado, 2:
+        	]);
+        	$this->uploadFile($code);
+        	\QrCode::size(500)
+                ->format('png')
+                ->generate($this->urlExtern.'visor.php?code='.$code, public_path("qr/$code.png"));
+            return ['file' => $namefile, 'status' => 'Procesado'];
+        }
+        return ['file' => $namefile, 'status' => 'Omitido'];
     }
 
     public function uploadFile($code){
